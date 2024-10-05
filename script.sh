@@ -1,0 +1,1 @@
+ffmpeg -i vid.mp4 -c:v libx264 -c:a aac -b:v 1000k -b:a 128k -map 0 -f segment -segment_time 10 -segment_list outputlist.m3u8 -segment_format mpegts output%03d.ts
