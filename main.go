@@ -1,26 +1,22 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"text/template"
 )
 
-func main2() {
-	router := http.NewServeMux()
-	router.HandleFunc("GET /files", func(w http.ResponseWriter, r *http.Request) {
-		res := map[string]any{
-			"data": "hi there",
-		}
-		resJson, err := json.Marshal(res)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(resJson)
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /video", func(w http.ResponseWriter, r *http.Request) {
+		t, _ := template.ParseFiles("./client/webpage.html")
+		t.Execute(w, nil)
 	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("acessed")
+		http.FileServer(http.Dir("videos")).ServeHTTP(w, r)
+	})
+	router := MiddlewareCORS(mux)
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -31,4 +27,13 @@ func main2() {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+}
+
+func MiddlewareCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, ngrok-skip-browser-warning")
+		next.ServeHTTP(w, r)
+	})
 }
